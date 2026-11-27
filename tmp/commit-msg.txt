@@ -1,0 +1,13 @@
+feat(finance-app): initial market dashboard for IBM vs. competitors
+
+React + Vite + TypeScript dashboard comparing IBM with MSFT, ORCL, SAP
+and CRM over three windows (today, 7 days, last quarter) using Yahoo
+Finance data via a small Express proxy.
+
+- Data layer behind a MarketDataService interface (HTTP + mock), with
+  Yahoo normalization and per-symbol error results
+- Proxy with TTL cache that serves stale data when Yahoo fails
+- Today / 7 Days / Quarter views: summary cards, relative-performance
+  charts, ranking bars and table
+- Companies configured in one file
+- 71 tests; npm run check runs lint, typecheck, tests and build

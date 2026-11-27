@@ -1,0 +1,108 @@
+- generic [active] [ref=f4e1]:
+  - main [ref=f4e3]:
+    - generic [ref=f4e4]:
+      - heading "Market Dashboard" [level=1] [ref=f4e5]
+      - paragraph [ref=f4e6]: IBM compared with major competitors
+      - tablist "Time window" [ref=f4e7]:
+        - tab "Today" [selected] [ref=f4e8] [cursor=pointer]
+        - tab "7 Days" [ref=f4e9] [cursor=pointer]
+        - tab "Quarter" [ref=f4e10] [cursor=pointer]
+    - generic [ref=f4e11]:
+      - region "Summary" [ref=f4e12]:
+        - article "IBM" [ref=f4e13]:
+          - paragraph [ref=f4e14]: IBM
+          - paragraph [ref=f4e15]: +1.12%
+          - paragraph [ref=f4e16]: Rank 3 of 5 · vs previous close
+        - article "Best performer" [ref=f4e17]:
+          - paragraph [ref=f4e18]: Best performer
+          - paragraph [ref=f4e19]: +4.21%
+          - paragraph [ref=f4e20]: Salesforce
+        - article "Weakest performer" [ref=f4e21]:
+          - paragraph [ref=f4e22]: Weakest performer
+          - paragraph [ref=f4e23]: "-3.68%"
+          - paragraph [ref=f4e24]: Oracle
+        - article "IBM vs peers" [ref=f4e25]:
+          - paragraph [ref=f4e26]: IBM vs peers
+          - paragraph [ref=f4e27]: +0.2 pts
+          - paragraph [ref=f4e28]: Peer average +0.97%
+      - region "Current quotes" [ref=f4e29]:
+        - article "IBM quote" [ref=f4e30]:
+          - heading "IBM" [level=3] [ref=f4e31]
+          - paragraph [ref=f4e32]: 235.62 USD
+          - paragraph [ref=f4e33]: +2.62 (+1.12%)
+        - article "Microsoft quote" [ref=f4e34]:
+          - heading "MSFT Microsoft" [level=3] [ref=f4e35]:
+            - text: MSFT
+            - generic [ref=f4e36]: Microsoft
+          - paragraph [ref=f4e37]: 496.13 USD
+          - paragraph [ref=f4e38]: +3.63 (+0.74%)
+        - article "Oracle quote" [ref=f4e39]:
+          - heading "ORCL Oracle" [level=3] [ref=f4e40]:
+            - text: ORCL
+            - generic [ref=f4e41]: Oracle
+          - paragraph [ref=f4e42]: 109.50 USD
+          - paragraph [ref=f4e43]: "-4.18 (-3.68%)"
+        - article "SAP quote" [ref=f4e44]:
+          - heading "SAP" [level=3] [ref=f4e45]
+          - paragraph [ref=f4e46]: 208.75 USD
+          - paragraph [ref=f4e47]: +5.35 (+2.63%)
+        - article "Salesforce quote" [ref=f4e48]:
+          - heading "CRM Salesforce" [level=3] [ref=f4e49]:
+            - text: CRM
+            - generic [ref=f4e50]: Salesforce
+          - paragraph [ref=f4e51]: 193.26 USD
+          - paragraph [ref=f4e52]: +7.80 (+4.21%)
+      - region "Today, session so far" [ref=f4e53]:
+        - generic [ref=f4e54]:
+          - heading "Today, session so far" [level=2] [ref=f4e55]
+          - paragraph [ref=f4e56]: "% change since the session opened (latest trading day)"
+        - generic [ref=f4e117]:
+          - img [ref=f4e118]:
+            - generic [ref=f4e123]:
+              - generic [ref=f4e124]: 11:50 AM
+              - generic [ref=f4e126]: 12:35 PM
+              - generic [ref=f4e128]: 01:20 PM
+              - generic [ref=f4e130]: 02:05 PM
+              - generic [ref=f4e132]: 02:50 PM
+              - generic [ref=f4e134]: 03:35 PM
+              - generic [ref=f4e136]: 04:20 PM
+              - generic [ref=f4e138]: 05:05 PM
+              - generic [ref=f4e140]: 06:00 PM
+            - generic [ref=f4e143]:
+              - generic [ref=f4e144]: "-3.0%"
+              - generic [ref=f4e146]: 0.0%
+              - generic [ref=f4e148]: 3.0%
+              - generic [ref=f4e150]: 6.0%
+              - generic [ref=f4e152]: 9.0%
+          - list [ref=f4e165]:
+            - listitem [ref=f4e166]: IBM
+            - listitem [ref=f4e169]: MSFT
+            - listitem [ref=f4e172]: ORCL
+            - listitem [ref=f4e175]: SAP
+            - listitem [ref=f4e178]: CRM
+      - region "Today's movers" [ref=f4e58]:
+        - generic [ref=f4e59]:
+          - heading "Today's movers" [level=2] [ref=f4e60]
+          - paragraph [ref=f4e61]: "% change vs previous close"
+        - img [ref=f4e65]:
+          - generic [ref=f4e69]:
+            - generic [ref=f4e70]: "-6%"
+            - generic [ref=f4e72]: "-4%"
+            - generic [ref=f4e74]: "-2%"
+            - generic [ref=f4e76]: 0%
+            - generic [ref=f4e78]: 2%
+            - generic [ref=f4e80]: 4%
+            - generic [ref=f4e82]: 6%
+          - generic [ref=f4e85]:
+            - generic [ref=f4e86]: CRM
+            - generic [ref=f4e88]: SAP
+            - generic [ref=f4e90]: IBM
+            - generic [ref=f4e92]: MSFT
+            - generic [ref=f4e94]: ORCL
+          - generic [ref=f4e108]:
+            - generic [ref=f4e109]: +4.21%
+            - generic [ref=f4e110]: +2.63%
+            - generic [ref=f4e111]: +1.12%
+            - generic [ref=f4e112]: +0.74%
+            - generic [ref=f4e113]: "-3.68%"
+  - generic [aria-hidden] [ref=f4e114]: "-3.0%"

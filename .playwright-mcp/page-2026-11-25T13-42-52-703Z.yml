@@ -1,0 +1,21 @@
+- main [ref=f3e3]:
+  - generic [ref=f3e4]:
+    - heading "Market Dashboard" [level=1] [ref=f3e5]
+    - paragraph [ref=f3e6]: IBM compared with major competitors
+    - tablist "Time window" [ref=f3e7]:
+      - tab "Today" [selected] [ref=f3e8] [cursor=pointer]
+      - tab "7 Days" [ref=f3e9] [cursor=pointer]
+      - tab "Quarter" [ref=f3e10] [cursor=pointer]
+  - generic [ref=f3e11]:
+    - region "Current quotes" [ref=f3e12]:
+      - status [ref=f3e13]: Loading quotes…
+    - region "Today, session so far" [ref=f3e14]:
+      - generic [ref=f3e15]:
+        - heading "Today, session so far" [level=2] [ref=f3e16]
+        - paragraph [ref=f3e17]: "% change since the session opened (latest trading day)"
+      - status [ref=f3e18]: Loading…
+    - region "Today's movers" [ref=f3e19]:
+      - generic [ref=f3e20]:
+        - heading "Today's movers" [level=2] [ref=f3e21]
+        - paragraph [ref=f3e22]: "% change vs previous close"
+      - status [ref=f3e23]: Loading…

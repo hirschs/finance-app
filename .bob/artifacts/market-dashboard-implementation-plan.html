@@ -1,0 +1,399 @@
+
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Market Dashboard — Implementation Plan</title>
+<style>
+  body { margin: 0; background: #ffffff; color: #1f2328; font-family: -apple-system, "Segoe UI", system-ui, sans-serif; font-size: 14.5px; line-height: 1.6; }
+  main { max-width: 760px; margin: 0 auto; padding: 40px 24px 24px; }
+  h1 { font-size: 28px; line-height: 1.25; margin: 0 0 6px; }
+  h2 { font-size: 19px; margin: 40px 0 10px; padding-top: 18px; border-top: 1px solid #e5e7eb; }
+  h3 { font-size: 15px; margin: 22px 0 6px; }
+  p { margin: 8px 0; }
+  .sub { color: #57606a; margin: 0 0 18px; }
+  .meta { color: #57606a; font-size: 12.5px; }
+  .callout { background: #f7f8fa; border: 1px solid #e5e7eb; border-left: 3px solid #3b82d4; padding: 12px 16px; margin: 14px 0; border-radius: 4px; }
+  .callout.warn { border-left-color: #7c5cd8; }
+  .callout p { margin: 4px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13.5px; }
+  th, td { text-align: left; vertical-align: top; padding: 7px 10px; border: 1px solid #e5e7eb; }
+  th { background: #f7f8fa; font-weight: 600; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; background: #f7f8fa; border: 1px solid #e5e7eb; border-radius: 3px; padding: 0 4px; }
+  pre { background: #f7f8fa; border: 1px solid #e5e7eb; border-radius: 4px; padding: 12px 14px; overflow-x: auto; font-size: 12.5px; line-height: 1.5; margin: 12px 0; }
+  pre code { background: none; border: 0; padding: 0; }
+  ul, ol { margin: 8px 0; padding-left: 22px; }
+  li { margin: 3px 0; }
+  .grid { display: table; width: 100%; border-spacing: 8px 0; margin: 12px -8px; }
+  .kpi { display: table-cell; background: #f7f8fa; border: 1px solid #e5e7eb; border-radius: 4px; padding: 10px 12px; width: 25%; }
+  .kpi b { display: block; font-size: 20px; color: #3b82d4; }
+  .kpi span { color: #57606a; font-size: 12.5px; }
+  .tag { display: inline-block; font-size: 11.5px; padding: 0 7px; border: 1px solid #e5e7eb; border-radius: 10px; background: #f7f8fa; color: #57606a; }
+  .toc { columns: 2; font-size: 13.5px; margin: 10px 0; }
+  .toc a { color: #3b82d4; text-decoration: none; }
+  footer { max-width: 760px; margin: 30px auto 0; padding: 14px 24px 28px; border-top: 1px solid #e5e7eb; text-align: center; color: #57606a; font-size: 12px; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Market Dashboard — Implementation Plan</h1>
+<p class="sub">Starting point: the “IBM Bob GitHub SDLC Lab” repository. Target: a React dashboard tracking IBM and up to four competitors from Yahoo Finance, in three time windows.</p>
+
+<div class="grid">
+  <div class="kpi"><b>5</b><span>tickers (IBM + 4 peers)</span></div>
+  <div class="kpi"><b>3</b><span>windows: day, 7 days, quarter</span></div>
+  <div class="kpi"><b>2</b><span>data sources: live proxy, mock</span></div>
+  <div class="kpi"><b>5</b><span>delivery phases</span></div>
+</div>
+
+<div class="toc">
+  <a href="#findings">1. Repository findings</a><br />
+  <a href="#stack">2. Recommended stack</a><br />
+  <a href="#arch">3. Architecture</a><br />
+  <a href="#folders">4. Source folders</a><br />
+  <a href="#components">5. Component boundaries</a><br />
+  <a href="#data">6. Data service abstractions</a><br />
+  <a href="#charts">7. Charting approach</a><br />
+  <a href="#state">8. State management</a><br />
+  <a href="#errors">9. Error handling</a><br />
+  <a href="#tests">10. Test strategy</a><br />
+  <a href="#validate">11. Local validation</a><br />
+  <a href="#github">12. GitHub-driven evolution</a><br />
+  <a href="#phases">13. Delivery phases</a><br />
+  <a href="#risks">14. Risks and decisions</a>
+</div>
+
+
+<h2 id="findings">1. Repository findings</h2>
+<p>I inspected every file in the repository. The workshop documents describe the target well, but there is no application code yet.</p>
+<table>
+  <tr><th>Item</th><th>Observed state</th></tr>
+  <tr><td><code>finance-app/</code></td><td>Exists but is <strong>empty</strong>. This is where the app goes.</td></tr>
+  <tr><td><code>README.md</code>, <code>WORKSHOP-part1/2</code></td><td>Define scope: IBM, Microsoft, Oracle, SAP, Salesforce; day / 7-day / quarter views; Yahoo Finance via <code>yahoo-finance2</code> or a backend proxy. Part 2 plans a “graph for a user-selected company” feature.</td></tr>
+  <tr><td><code>.github/workflows/finance-app-ci.yml</code></td><td>Runs install, lint, test and build on <code>main</code>, <code>feature/**</code> and <code>bob/**</code>, plus PRs to <code>main</code>.</td></tr>
+  <tr><td><code>.github/PULL_REQUEST_TEMPLATE.md</code></td><td>Present, with sections for summary, change type, Bob notes, validation and feature-request alignment.</td></tr>
+  <tr><td><code>docs/pr-feature-request-example.md</code></td><td>Acceptance criteria for the follow-on feature (user-selected ticker, loading and error states, existing dashboards preserved).</td></tr>
+  <tr><td>Git state</td><td>The workspace is <strong>not a git repository</strong> (no <code>.git</code>, no remote).</td></tr>
+  <tr><td>Toolchain</td><td>Local Node v24.12.0 and npm 11.6.2. CI pins Node 20.</td></tr>
+</table>
+
+<div class="callout warn">
+  <p><strong>Gaps to fix before or during scaffolding</strong></p>
+  <ol>
+    <li><strong>CI points at the wrong directory.</strong> The workflow runs <code>npm</code> at the repository root, but the app will live in <code>finance-app/</code>. Add <code>defaults.run.working-directory: finance-app</code> and set <code>cache-dependency-path: finance-app/package-lock.json</code>.</li>
+    <li><strong>The CI install step needs a lockfile.</strong> <code>setup-node</code> with <code>cache: npm</code> fails without one. Commit <code>package-lock.json</code> and switch <code>npm install</code> to <code>npm ci</code>.</li>
+    <li><strong>CI silently passes with no scripts.</strong> <code>--if-present</code> makes lint, test and build succeed when a script is missing. Remove it once the scripts exist, so CI cannot go green on an empty app.</li>
+    <li><strong>Workshop Part 2 says to push from <code>finance-app</code> as its own repo,</strong> while the CI and templates sit at this repo's root. Pick one layout. This plan assumes <strong>one repo, app in <code>finance-app/</code></strong>.</li>
+    <li><strong>Node version drift.</strong> Add an <code>engines</code> field and a <code>.nvmrc</code> set to 20. Local v24 should still work, but document it.</li>
+    <li><strong>The README refers to a “reference folder”</strong> that is not present. Treat it as stale and remove or fix the reference.</li>
+  </ol>
+</div>
+
+
+<h2 id="stack">2. Recommended stack</h2>
+<table>
+  <tr><th>Concern</th><th>Choice</th><th>Why</th></tr>
+  <tr><td>Build / UI</td><td>Vite, React 18, TypeScript (strict)</td><td>Fast to scaffold and well supported by Bob. Types enforce the data contracts between layers.</td></tr>
+  <tr><td>Market data</td><td><code>yahoo-finance2</code> on a small Node proxy</td><td>The package is unofficial and aimed at Node. Browser calls hit CORS and break when Yahoo changes. A proxy isolates that volatility.</td></tr>
+  <tr><td>Proxy</td><td>Express (or Fastify) with <code>zod</code> validation</td><td>Small, familiar, easy to test with <code>supertest</code>.</td></tr>
+  <tr><td>Server-state</td><td>TanStack Query</td><td>Caching, retries, per-query loading and error state, background refresh.</td></tr>
+  <tr><td>UI state</td><td>URL search params plus <code>useState</code></td><td>Window and selected tickers are shareable and need no global store.</td></tr>
+  <tr><td>Charts</td><td>Recharts</td><td>Declarative React API and enough for line and area charts. Swappable behind an adapter (section 7).</td></tr>
+  <tr><td>Tests</td><td>Vitest, React Testing Library, MSW, <code>supertest</code></td><td>Same toolchain as Vite. MSW mocks HTTP at the network boundary.</td></tr>
+  <tr><td>Quality</td><td>ESLint, Prettier, <code>tsc --noEmit</code></td><td>Maps directly onto the CI lint step.</td></tr>
+</table>
+<p class="meta">Library choices are recommendations. The architecture below does not depend on any of them being kept.</p>
+
+
+<h2 id="arch">3. Architecture</h2>
+<p>Four layers with one-way dependencies. The UI never knows about Yahoo; the proxy never knows about React.</p>
+<pre><code>Browser (Vite + React)
+ ├─ UI layer         components/ pages/         render only, no fetching
+ ├─ State layer      hooks/ (TanStack Query)    cache, loading, errors, URL state
+ ├─ Domain layer     domain/                    types, window config, metrics (pure)
+ └─ Data layer       services/                  MarketDataService interface
+        ├─ HttpMarketDataService   ──►  /api/*  (Vite dev proxy / same-origin in prod)
+        └─ MockMarketDataService   ──►  fixtures (tests, offline workshop)
+
+Node proxy (finance-app/server)
+ ├─ routes/          validate input (zod), map errors to HTTP codes
+ ├─ yahooClient      the only file that imports yahoo-finance2
+ └─ cache            in-memory TTL cache per (symbol, window)</code></pre>
+
+<div class="callout">
+  <p><strong>Key design rule.</strong> Everything after <code>yahooClient</code> is provider-neutral. If Yahoo access breaks, you replace one file, or flip <code>VITE_DATA_SOURCE=mock</code>, and the rest of the app is unaffected. The workshop notes ask for exactly this resilience.</p>
+</div>
+
+
+<h2 id="folders">4. Source folders</h2>
+<pre><code>finance-app/
+├─ package.json            scripts: dev, dev:server, lint, typecheck, test, build
+├─ vite.config.ts          dev proxy /api → http://localhost:3001
+├─ tsconfig.json  .eslintrc.cjs  .prettierrc  .nvmrc  .env.example
+├─ index.html
+├─ src/
+│  ├─ main.tsx  App.tsx
+│  ├─ config/
+│  │   └─ companies.ts         default tickers: IBM, MSFT, ORCL, SAP, CRM
+│  ├─ domain/
+│  │   ├─ types.ts             Quote, PricePoint, Series, WindowId
+│  │   ├─ windows.ts           window → range / interval config
+│  │   └─ metrics.ts           rebase, % change, ranking (pure functions)
+│  ├─ services/
+│  │   ├─ MarketDataService.ts       interface
+│  │   ├─ HttpMarketDataService.ts   fetch against /api
+│  │   ├─ MockMarketDataService.ts   deterministic fixtures
+│  │   ├─ normalize.ts               raw payload → domain types
+│  │   └─ index.ts                   picks implementation from env
+│  ├─ hooks/
+│  │   ├─ useQuotes.ts  useSeries.ts  useDashboardParams.ts
+│  ├─ components/
+│  │   ├─ layout/  AppShell, Header
+│  │   ├─ controls/  WindowTabs, CompanyPicker
+│  │   ├─ cards/  QuoteCard, QuoteCardGrid
+│  │   ├─ charts/  PriceChart, ChartCard, chartTheme.ts
+│  │   ├─ table/  RankingTable
+│  │   └─ feedback/  Loading, ErrorPanel, EmptyState, ErrorBoundary
+│  ├─ pages/DashboardPage.tsx
+│  ├─ test/  setup.ts  fixtures/  msw-handlers.ts
+│  └─ styles/
+├─ server/
+│  ├─ index.ts  app.ts
+│  ├─ routes/  quotes.ts  history.ts
+│  ├─ yahooClient.ts           only importer of yahoo-finance2
+│  ├─ cache.ts  schemas.ts
+│  └─ __tests__/
+└─ README.md                   run, test, architecture notes</code></pre>
+
+
+<h2 id="components">5. React component boundaries</h2>
+<p>Only the page and hooks touch data. Components below them are props-in, JSX-out, and tested in isolation.</p>
+<table>
+  <tr><th>Component</th><th>Responsibility</th><th>Receives</th><th>Knows about data fetching?</th></tr>
+  <tr><td><code>DashboardPage</code></td><td>Composes the view. Reads URL params, calls hooks, passes data down.</td><td>none</td><td><strong>Yes</strong> (via hooks)</td></tr>
+  <tr><td><code>WindowTabs</code></td><td>Switch between Today, 7 Days, Quarter.</td><td><code>value</code>, <code>onChange</code></td><td>No</td></tr>
+  <tr><td><code>CompanyPicker</code></td><td>Toggle which of the 5 tickers are shown. IBM stays pinned.</td><td><code>companies</code>, <code>selected</code>, <code>onChange</code></td><td>No</td></tr>
+  <tr><td><code>QuoteCardGrid</code> / <code>QuoteCard</code></td><td>Price, absolute and % change, market state.</td><td><code>Quote</code> or a loading or error state</td><td>No</td></tr>
+  <tr><td><code>ChartCard</code></td><td>Titled frame with loading, error and empty states around a chart.</td><td><code>title</code>, <code>status</code>, children</td><td>No</td></tr>
+  <tr><td><code>PriceChart</code></td><td>Multi-line comparison chart. Y axis shows % change from the window start.</td><td><code>series[]</code>, <code>window</code></td><td>No</td></tr>
+  <tr><td><code>RankingTable</code></td><td>Performance ranking for the selected window.</td><td>derived metrics</td><td>No</td></tr>
+  <tr><td><code>ErrorBoundary</code></td><td>Catch render crashes in one panel so the rest of the dashboard survives.</td><td>children</td><td>No</td></tr>
+</table>
+<p>Page layout, top to bottom: header with window tabs, company picker, quote cards, comparison chart, ranking table.</p>
+
+
+<h2 id="data">6. Data service abstractions</h2>
+<h3>Domain contract</h3>
+<pre><code>type WindowId = 'day' | 'week' | 'quarter';
+
+interface Quote {
+  symbol: string; name: string; currency: string;
+  price: number; change: number; changePct: number;
+  marketState: 'PRE' | 'REGULAR' | 'POST' | 'CLOSED';
+  asOf: number;               // epoch ms
+}
+interface PricePoint { t: number; close: number }
+interface Series {
+  symbol: string; window: WindowId;
+  points: PricePoint[];       // ascending by t, nulls removed
+  previousClose?: number;
+}
+
+interface MarketDataService {
+  getQuotes(symbols: string[]): Promise&lt;Result&lt;Quote&gt;[]&gt;;
+  getSeries(symbol: string, window: WindowId): Promise&lt;Series&gt;;
+}</code></pre>
+
+<h3>Time-window configuration</h3>
+<p>Define once in <code>domain/windows.ts</code>. UI, proxy and tests all read from it.</p>
+<table>
+  <tr><th>Window</th><th>Range</th><th>Interval</th><th>Proxy cache TTL</th><th>Notes</th></tr>
+  <tr><td><code>day</code></td><td>Current trading session</td><td>5 min</td><td>~60 s</td><td>If the market is closed, show the <strong>last completed session</strong> and label it.</td></tr>
+  <tr><td><code>week</code></td><td>Last 7 calendar days (about 5 trading days)</td><td>30 min to 1 h</td><td>~5 min</td><td>Gaps over weekends are expected. Do not interpolate.</td></tr>
+  <tr><td><code>quarter</code></td><td>Trailing ~90 days</td><td>1 day</td><td>~1 h</td><td>“Last quarter” is ambiguous. This plan uses trailing 3 months, not the previous calendar quarter. Record the decision in the README.</td></tr>
+</table>
+<p class="meta">Exact intervals should be confirmed against what Yahoo returns for each range during Phase 2.</p>
+
+<h3>Proxy endpoints</h3>
+<table>
+  <tr><th>Endpoint</th><th>Behavior</th></tr>
+  <tr><td><code>GET /api/quotes?symbols=IBM,MSFT</code></td><td>Validates symbols (pattern and max count), returns per-symbol results so one bad ticker does not fail the batch.</td></tr>
+  <tr><td><code>GET /api/history?symbol=IBM&amp;window=week</code></td><td>Validates both params, calls the chart endpoint of <code>yahoo-finance2</code>, returns normalized points.</td></tr>
+  <tr><td><code>GET /api/health</code></td><td>Used by local validation and smoke checks.</td></tr>
+</table>
+<p>Use the library's chart call for history rather than the legacy historical call, which Yahoo has been deprecating. Confirm the exact method against the installed version.</p>
+
+<h3>Normalization and resilience rules</h3>
+<ul>
+  <li>Drop points where <code>close</code> is <code>null</code> or non-finite (common on holidays and thin trading).</li>
+  <li>Sort ascending and de-duplicate by timestamp.</li>
+  <li>Fetch per symbol with <code>Promise.allSettled</code>. A failed peer shows an error card, and the other four stay usable.</li>
+  <li>Keep proxy cache keys as <code>symbol:window</code> and serve stale data on upstream failure, marked <code>stale: true</code>.</li>
+  <li>Allow-list tickers on the server when in default mode, which keeps the proxy from becoming an open Yahoo relay. Loosen this in the later user-selected-company feature (section 12).</li>
+</ul>
+
+<h3>Implementation selection</h3>
+<p><code>services/index.ts</code> returns <code>MockMarketDataService</code> when <code>VITE_DATA_SOURCE=mock</code> and <code>HttpMarketDataService</code> otherwise. Mock mode makes demos, CI and component tests independent of Yahoo's availability.</p>
+
+
+<h2 id="charts">7. Charting approach</h2>
+<ul>
+  <li><strong>One comparison chart, normalized.</strong> Different share prices (IBM vs. Salesforce) cannot share a raw-price axis. Rebase each series to <code>(close / firstClose − 1) × 100</code>, so all lines start at 0% and show relative performance. Implement this in <code>domain/metrics.ts</code> as a pure, unit-tested function.</li>
+  <li><strong>Per-window formatting.</strong> Day shows time-of-day ticks; week shows weekday plus time; quarter shows dates. Tooltip shows raw price and % change.</li>
+  <li><strong>IBM emphasis.</strong> IBM gets a heavier stroke, and peers use a fixed accessible palette in <code>chartTheme.ts</code>. Direct labels or a legend must not rely on color alone.</li>
+  <li><strong>Adapter boundary.</strong> <code>PriceChart</code> is the only file importing Recharts. Its props are domain types, so swapping to another chart library touches one component.</li>
+  <li><strong>Summary cards for “current day”.</strong> Quote cards carry price and daily change. The day chart supplements them with the intraday shape.</li>
+  <li><strong>Accessibility.</strong> Provide a text summary (<code>aria-label</code> or visually hidden) and the ranking table as a non-visual equivalent.</li>
+</ul>
+
+
+<h2 id="state">8. State management strategy</h2>
+<table>
+  <tr><th>State</th><th>Kind</th><th>Where it lives</th></tr>
+  <tr><td>Quotes, series (loading / error / data)</td><td>Server state</td><td>TanStack Query. Keys: <code>['quotes', symbols]</code>, <code>['series', symbol, window]</code>.</td></tr>
+  <tr><td>Active window, selected tickers</td><td>Shareable UI state</td><td>URL search params through <code>useDashboardParams</code> (<code>?w=week&amp;t=IBM,MSFT</code>). Back and forward navigation and link sharing work with no extra code.</td></tr>
+  <tr><td>Derived metrics (rebased series, ranking)</td><td>Derived</td><td>Computed with <code>useMemo</code> from query data. Not stored.</td></tr>
+  <tr><td>Ephemeral UI (hover, popovers)</td><td>Local</td><td>Component <code>useState</code>.</td></tr>
+</table>
+<p>No Redux or Zustand at this stage. Query defaults: <code>staleTime</code> aligned to the proxy TTL, <code>retry: 2</code> with backoff, and <code>refetchInterval</code> only for the <code>day</code> window while the market is open.</p>
+
+
+<h2 id="errors">9. Error handling</h2>
+<table>
+  <tr><th>Failure</th><th>Where caught</th><th>User-visible result</th></tr>
+  <tr><td>Yahoo unreachable or rate-limited</td><td>Proxy returns <code>502</code> or <code>429</code>; serves stale cache when available</td><td>Data with a “Stale as of …” badge, or an <code>ErrorPanel</code> with Retry</td></tr>
+  <tr><td>Invalid or unknown symbol</td><td>Proxy returns <code>400</code> / <code>404</code> with a typed error code</td><td>Card-level message (“Symbol not found”). Other cards unaffected.</td></tr>
+  <tr><td>Partial or empty series</td><td><code>normalize.ts</code> and <code>ChartCard</code></td><td><code>EmptyState</code> (“No data for this window”). Market-closed notice for <code>day</code>.</td></tr>
+  <tr><td>Network failure</td><td><code>HttpMarketDataService</code> throws a typed <code>DataError</code></td><td>Query retries, then <code>ErrorPanel</code></td></tr>
+  <tr><td>Render exception</td><td><code>ErrorBoundary</code> per panel</td><td>One panel shows a fallback. The page keeps working.</td></tr>
+  <tr><td>Bad query-string values</td><td><code>useDashboardParams</code></td><td>Falls back to defaults (<code>day</code>, full ticker list)</td></tr>
+</table>
+<p>Define one <code>DataError</code> type with <code>code</code> (<code>NOT_FOUND</code>, <code>UPSTREAM</code>, <code>RATE_LIMIT</code>, <code>NETWORK</code>, <code>INVALID</code>) shared by the proxy and the client. Every error state in the UI maps from that code, so wording stays consistent and testable.</p>
+
+
+<h2 id="tests">10. Test strategy</h2>
+<table>
+  <tr><th>Level</th><th>Scope</th><th>Tooling</th><th>Examples</th></tr>
+  <tr><td>Unit (domain)</td><td>Pure logic</td><td>Vitest</td><td>Rebase math, % change, ranking order, window config, null-point filtering in <code>normalize.ts</code></td></tr>
+  <tr><td>Unit (server)</td><td>Routes, validation, cache</td><td>Vitest, <code>supertest</code>, mocked <code>yahooClient</code></td><td>Rejects bad symbols, caches within TTL, serves stale on upstream error</td></tr>
+  <tr><td>Component</td><td>Presentational components</td><td>RTL</td><td><code>QuoteCard</code> positive and negative change; <code>ChartCard</code> loading, error and empty states</td></tr>
+  <tr><td>Integration</td><td><code>DashboardPage</code> with hooks and MSW</td><td>RTL, MSW</td><td>Switching tabs updates the URL and requests the right window; one failed ticker does not break the others</td></tr>
+  <tr><td>Contract</td><td>Client and proxy agree on shapes</td><td>Shared <code>zod</code> schemas</td><td>Proxy responses parse with the client schema</td></tr>
+  <tr><td>Live smoke (opt-in)</td><td>Real Yahoo response shape</td><td>Vitest, excluded from default run</td><td><code>npm run test:live</code>. Run manually, since Yahoo availability must not gate CI.</td></tr>
+</table>
+<p>The workshop's minimum bar (“tests for the data transformation logic and at least one UI rendering path”) is met by the unit and integration rows. Set coverage thresholds for <code>domain/</code> and <code>services/normalize.ts</code> only, so the number reflects logic rather than markup.</p>
+
+
+<h2 id="validate">11. Local validation steps</h2>
+<pre><code>cd finance-app
+nvm use                      # Node 20 per .nvmrc (v24 also expected to work)
+npm ci
+
+npm run lint                 # ESLint + Prettier check
+npm run typecheck            # tsc --noEmit
+npm test                     # Vitest, non-watch, no network
+npm run build                # production bundle
+
+# Manual check, mock data (no network needed)
+VITE_DATA_SOURCE=mock npm run dev
+
+# Manual check, live data (two terminals)
+npm run dev:server           # proxy on :3001
+npm run dev                  # Vite on :5173
+curl localhost:3001/api/health
+curl "localhost:3001/api/history?symbol=IBM&amp;window=week"</code></pre>
+<p><strong>Success looks like:</strong></p>
+<ul>
+  <li>lint, typecheck, tests and build all exit 0 with no warnings introduced;</li>
+  <li>the page shows 5 quote cards, a comparison chart that updates when the tabs change, and a ranking table;</li>
+  <li>stopping the proxy produces an error panel with Retry, not a blank page;</li>
+  <li>requesting a bogus ticker affects only its own card.</li>
+</ul>
+
+<h3>CI alignment</h3>
+<p>Adjust <code>finance-app-ci.yml</code> so it runs the same commands as local validation:</p>
+<pre><code>defaults:
+  run:
+    working-directory: finance-app
+...
+- uses: actions/setup-node@v4
+  with:
+    node-version: 20
+    cache: npm
+    cache-dependency-path: finance-app/package-lock.json
+- run: npm ci
+- run: npm run lint
+- run: npm run typecheck
+- run: npm test
+- run: npm run build</code></pre>
+<p>CI always runs with mock data and MSW, so it needs no network and no secrets. The existing <code>--runInBand</code> flag is a Jest option, not a Vitest one. Drop it.</p>
+
+
+<h2 id="github">12. Supporting GitHub-driven feature evolution</h2>
+<p>The point of the architecture is that a GitHub issue or PR request can be mapped to a small, predictable set of files. Both humans and Bob can then implement it safely.</p>
+
+<h3>Extension points designed in</h3>
+<table>
+  <tr><th>Likely request</th><th>Where it lands</th><th>Existing code touched</th></tr>
+  <tr><td>Add or swap a competitor</td><td><code>config/companies.ts</code></td><td>None</td></tr>
+  <tr><td>New time window (e.g. 1 year)</td><td><code>domain/windows.ts</code> plus a tab</td><td>None beyond the config and <code>WindowTabs</code></td></tr>
+  <tr><td>New chart or metric</td><td>new component in <code>components/charts</code>, pure function in <code>domain/metrics.ts</code></td><td>Page composition only</td></tr>
+  <tr><td>Different data provider</td><td>New <code>MarketDataService</code> implementation or <code>yahooClient</code> replacement</td><td>None in UI</td></tr>
+  <tr><td><strong>User-selected company graph</strong> (the Part 2 example)</td><td>New <code>SymbolSearch</code> control, reuse <code>useSeries</code> and <code>PriceChart</code>, new <code>SelectedCompanyPanel</code>, add an <code>s</code> URL param, relax the server allow-list to a validated pattern</td><td>Page gains one panel. Existing dashboards unchanged.</td></tr>
+</table>
+<p>For the example feature, the acceptance criteria in <code>docs/pr-feature-request-example.md</code> map directly onto existing pieces: loading and error states come from <code>ChartCard</code> and <code>DataError</code>, “existing dashboards remain visible” is covered by the integration test, and symbol validation reuses the proxy's <code>zod</code> schema.</p>
+
+<h3>Repository conventions to add</h3>
+<ul>
+  <li><strong>Issue templates</strong> (<code>.github/ISSUE_TEMPLATE/feature.yml</code>, <code>bug.yml</code>): require “expected behavior” and “acceptance criteria” fields, which is what Bob needs to plan from.</li>
+  <li><strong>Branch naming</strong> (already supported by CI triggers): <code>feature/&lt;slug&gt;</code>, <code>fix/&lt;slug&gt;</code>, <code>bob/&lt;slug&gt;</code> for AI-assisted branches.</li>
+  <li><strong>PR template</strong>: keep it, and add a “Closes #&lt;issue&gt;” line so issue and PR stay linked. Update its validation block to the real commands from section 11.</li>
+  <li><strong><code>CODEOWNERS</code> and branch protection on <code>main</code></strong>: require the CI job and one human approval. This keeps merging a human decision, in line with the README's note that Bob prepares and pushes branches but does not merge.</li>
+  <li><strong><code>CONTRIBUTING.md</code> or <code>finance-app/README.md</code> architecture section</strong>: layer rules, “where do I put X” table above, and validation commands. This is the context Bob reads first on every request.</li>
+  <li><strong>Small, typed, tested seams</strong>: every feature PR should add or update tests in the same layer it changes. CI enforces it.</li>
+</ul>
+
+<h3>Issue to merge flow</h3>
+<table>
+  <tr><th>#</th><th>Step</th><th>Actor</th></tr>
+  <tr><td>1</td><td>Issue opened from the feature template, with acceptance criteria</td><td>Product owner</td></tr>
+  <tr><td>2</td><td>Fetch the issue, map it to extension points (table above), propose a plan</td><td>Bob</td></tr>
+  <tr><td>3</td><td>Create <code>bob/&lt;slug&gt;</code> branch, implement with tests in the matching layers</td><td>Bob</td></tr>
+  <tr><td>4</td><td>Run lint, typecheck, test and build locally. Review the diff.</td><td>Bob</td></tr>
+  <tr><td>5</td><td>Push the branch and open the PR with the filled template and <code>Closes #N</code></td><td>Bob</td></tr>
+  <tr><td>6</td><td>CI validates (mock data, no secrets)</td><td>GitHub Actions</td></tr>
+  <tr><td>7</td><td>Review and merge, or send back with comments</td><td>Human maintainer</td></tr>
+</table>
+
+
+<h2 id="phases">13. Delivery phases</h2>
+<table>
+  <tr><th>Phase</th><th>Deliverable</th><th>Exit check</th></tr>
+  <tr><td>0. Repo hygiene</td><td><code>git init</code> and remote. Fix CI working directory, lockfile and <code>--if-present</code>. Add issue templates and <code>.nvmrc</code>.</td><td>CI is green on an empty-but-valid app skeleton</td></tr>
+  <tr><td>1. Skeleton</td><td>Vite + TS app, domain types, window config, mock service, <code>DashboardPage</code> with quote cards</td><td><code>npm run dev</code> works on mock data</td></tr>
+  <tr><td>2. Live data</td><td>Proxy, <code>yahooClient</code>, normalization, <code>HttpMarketDataService</code>, cache</td><td><code>curl</code> checks pass and live mode renders</td></tr>
+  <tr><td>3. Views</td><td><code>PriceChart</code> (normalized), window tabs, ranking table, company picker</td><td>All three windows render for five tickers</td></tr>
+  <tr><td>4. Hardening</td><td>Error states, <code>ErrorBoundary</code>, integration tests, coverage thresholds, docs</td><td>Failure drills in section 11 behave as described</td></tr>
+  <tr><td>5. First feature PR</td><td>User-selected company graph via the issue-to-PR flow</td><td>Merged PR with green CI</td></tr>
+</table>
+
+
+<h2 id="risks">14. Risks and open decisions</h2>
+<table>
+  <tr><th>Risk / decision</th><th>Mitigation / recommendation</th></tr>
+  <tr><td>Yahoo access is unofficial and can change, throttle or break without notice</td><td>Provider isolation, caching with stale fallback, mock mode, opt-in live smoke test. Label the app as educational and not for trading. Check Yahoo's terms before any non-lab use.</td></tr>
+  <tr><td>Market hours and holidays produce empty <code>day</code> data</td><td>Fall back to the last completed session and say so in the UI.</td></tr>
+  <tr><td>“Last quarter” wording</td><td>Decide: trailing 3 months (recommended) or previous calendar quarter. Confirm with the lab owner.</td></tr>
+  <tr><td>Proxy hosting for the lab</td><td>Local only (Vite proxy plus Node server) is enough for the workshop. A hosted deployment is out of scope.</td></tr>
+  <tr><td>Single repo vs. standalone <code>finance-app</code> repo</td><td>This plan assumes a single repo. If participants follow Part 2 literally and push only <code>finance-app/</code>, the <code>.github</code> files must move into it and the working-directory setting be removed.</td></tr>
+  <tr><td>Chart library lock-in</td><td>Contained in <code>PriceChart</code>.</td></tr>
+</table>
+
+<div class="callout">
+  <p><strong>Recommended next step:</strong> run Phase 0 and Phase 1 together. That means fixing the CI path and lockfile issues, then scaffolding the Vite app on mock data. After that, each later phase is a reviewable PR, and the lab reaches its first GitHub-driven feature with a stable, tested base.</p>
+</div>
+
+</main>
+<footer>Made with IBM Bob</footer>
+</body>
+</html>
