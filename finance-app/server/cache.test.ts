@@ -43,4 +43,17 @@ describe('TtlCache', () => {
     await cache.getOrLoad('a', 100, () => Promise.resolve('A'));
     expect(await cache.getOrLoad('b', 100, () => Promise.resolve('B'))).toBe('B');
   });
+
+  it('evicts the oldest entry once maxEntries is exceeded', async () => {
+    const cache = new TtlCache<string>(() => 0, 2);
+    const load = vi.fn((v: string) => () => Promise.resolve(v));
+
+    await cache.getOrLoad('a', 100, load('A'));
+    await cache.getOrLoad('b', 100, load('B'));
+    await cache.getOrLoad('c', 100, load('C'));
+
+    const reloadA = vi.fn().mockResolvedValue('A2');
+    expect(await cache.getOrLoad('a', 100, reloadA)).toBe('A2');
+    expect(reloadA).toHaveBeenCalledTimes(1);
+  });
 });

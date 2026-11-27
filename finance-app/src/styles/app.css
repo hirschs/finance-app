@@ -46,3 +46,16 @@ body { margin: 0; }
 .ranking thead th { font-weight: 600; font-size: 0.875rem; color: #525252; }
 .ranking .num { text-align: right; font-variant-numeric: tabular-nums; }
 .ranking tr.focus { background: #edf5ff; }
+
+.symbol-search { margin: 0 0 16px; }
+.symbol-search label { display: block; font-size: 0.875rem; color: #525252; margin-bottom: 4px; }
+.symbol-search-row { display: flex; gap: 4px; flex-wrap: wrap; }
+.symbol-search input {
+  border: 1px solid #c6c6c6; background: #fff; padding: 6px 10px; font: inherit; min-width: 200px;
+}
+.symbol-search input[aria-invalid='true'] { border-color: #da1e28; }
+.symbol-search button {
+  border: 1px solid #c6c6c6; background: #fff; padding: 6px 14px; cursor: pointer; font: inherit;
+}
+.symbol-search button[type='submit'] { background: #0f62fe; border-color: #0f62fe; color: #fff; }
+.symbol-search p { margin: 4px 0 0; }

@@ -22,10 +22,18 @@ const service: MarketDataService = {
   },
 };
 
+const lookupService: MarketDataService = {
+  getQuotes: service.getQuotes,
+  async getSeries(symbol, window) {
+    if (symbol === 'NONE') throw new DataError('NOT_FOUND', 'No data available for NONE');
+    return { symbol, window, points: [{ t: 1, close: 3 }] };
+  },
+};
+
 let close: (() => void) | undefined;
 
-async function start(): Promise<string> {
-  const server = createApp(service).listen(0);
+async function start(withLookup = false): Promise<string> {
+  const server = createApp(service, withLookup ? lookupService : undefined).listen(0);
   await new Promise((r) => server.once('listening', r));
   close = () => server.close();
   return `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
@@ -67,6 +75,25 @@ describe('proxy routes', () => {
     const res = await fetch(`${base}/api/history?symbol=IBM&window=year`);
     expect(res.status).toBe(400);
     expect((await res.json()).error.code).toBe('INVALID');
+  });
+
+  it('GET /api/lookup/history uses the lookup service, leaving /api/history on the tracked service', async () => {
+    const base = await start(true);
+    const lookup = await (await fetch(`${base}/api/lookup/history?symbol=aapl&window=day`)).json();
+    expect(lookup.series).toEqual({ symbol: 'AAPL', window: 'day', points: [{ t: 1, close: 3 }] });
+    const tracked = await (await fetch(`${base}/api/history?symbol=IBM&window=day`)).json();
+    expect(tracked.series.points).toEqual([{ t: 1, close: 2 }]);
+  });
+
+  it('GET /api/lookup/history returns 404 for a symbol with no data', async () => {
+    const res = await fetch(`${await start(true)}/api/lookup/history?symbol=NONE&window=day`);
+    expect(res.status).toBe(404);
+    expect((await res.json()).error.code).toBe('NOT_FOUND');
+  });
+
+  it('has no lookup route unless a lookup service is provided', async () => {
+    const res = await fetch(`${await start()}/api/lookup/history?symbol=AAPL&window=day`);
+    expect(res.status).toBe(404);
   });
 
   it('GET /api/history maps provider errors to HTTP status codes', async () => {
