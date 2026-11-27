@@ -28,6 +28,13 @@ function make(client: YahooClient, now = () => T) {
 }
 
 describe('YahooMarketDataService.getQuotes', () => {
+  it('names an unlisted symbol from Yahoo when lookups are allowed', async () => {
+    const client = fakeClient({ quote: vi.fn(async () => [{ ...quote('TSLA', 100), shortName: 'Tesla, Inc.' }]) });
+    const svc = new YahooMarketDataService({ client, companies: COMPANIES, allowUnlisted: true, now: () => T });
+    const [result] = await svc.getQuotes(['TSLA']);
+    expect(result.ok && result.value.name).toBe('Tesla, Inc.');
+  });
+
   it('returns normalized quotes with configured display names, in request order', async () => {
     const results = await make(fakeClient()).getQuotes(['MSFT', 'IBM']);
     expect(results.map((r) => (r.ok ? r.value.name : null))).toEqual(['Microsoft', 'IBM']);
@@ -88,6 +95,19 @@ describe('YahooMarketDataService.getSeries', () => {
       window: 'week',
       points: [{ t: T, close: 10 }, { t: T + 60_000, close: 11 }],
     });
+  });
+
+  it('serves unlisted symbols only when allowUnlisted is set, still rejecting malformed ones', async () => {
+    const client = fakeClient();
+    const svc = new YahooMarketDataService({ client, companies: COMPANIES, allowUnlisted: true, now: () => T });
+    expect((await svc.getSeries('TSLA', 'day')).symbol).toBe('TSLA');
+    await expect(svc.getSeries('../etc', 'day')).rejects.toMatchObject({ code: 'INVALID' });
+  });
+
+  it('still reports NOT_FOUND for an unlisted symbol Yahoo has no data for', async () => {
+    const client = fakeClient({ chart: vi.fn(async () => { throw new Error('No data found, symbol may be delisted'); }) });
+    const svc = new YahooMarketDataService({ client, companies: COMPANIES, allowUnlisted: true, now: () => T });
+    await expect(svc.getSeries('ZZZZ', 'day')).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 
   it('rejects invalid and untracked symbols without calling Yahoo', async () => {

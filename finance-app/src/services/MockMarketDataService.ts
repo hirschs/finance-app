@@ -19,7 +19,7 @@ const BASE_PRICE: Record<string, number> = {
 };
 const DEFAULT_BASE_PRICE = 100;
 
-function isKnown(symbol: string): boolean {
+function isTracked(symbol: string): boolean {
   return COMPANIES.some((c) => c.symbol === symbol);
 }
 
@@ -55,10 +55,16 @@ function buildPoints(symbol: string, window: WindowId, now: number): PricePoint[
 }
 
 export class MockMarketDataService implements MarketDataService {
+  /** `extraSymbols` are served in addition to the configured companies (for the user-lookup mock). */
   constructor(
     private readonly now: () => number = Date.now,
     private readonly latencyMs = 150,
+    private readonly extraSymbols: readonly string[] = [],
   ) {}
+
+  private isKnown(symbol: string): boolean {
+    return isTracked(symbol) || this.extraSymbols.includes(symbol);
+  }
 
   private async delay(): Promise<void> {
     if (this.latencyMs > 0) await new Promise((r) => setTimeout(r, this.latencyMs));
@@ -66,14 +72,14 @@ export class MockMarketDataService implements MarketDataService {
 
   async getSeries(symbol: string, window: WindowId): Promise<Series> {
     await this.delay();
-    if (!isKnown(symbol)) throw new DataError('NOT_FOUND', `Unknown symbol ${symbol}`);
+    if (!this.isKnown(symbol)) throw new DataError('NOT_FOUND', `Unknown symbol ${symbol}`);
     return { symbol, window, points: buildPoints(symbol, window, this.now()) };
   }
 
   async getQuotes(symbols: string[]): Promise<Result<Quote>[]> {
     await this.delay();
     return symbols.map((symbol): Result<Quote> => {
-      if (!isKnown(symbol)) {
+      if (!this.isKnown(symbol)) {
         return { ok: false, error: new DataError('NOT_FOUND', `Unknown symbol ${symbol}`) };
       }
       const points = buildPoints(symbol, 'day', this.now());

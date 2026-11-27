@@ -1,14 +1,13 @@
 import { COMPANIES } from '../src/config/companies';
 import { normalizeQuote, normalizeSeries } from '../src/domain/normalize';
 import type { RawQuote } from '../src/domain/normalize';
+import { isValidSymbol } from '../src/domain/symbol';
 import { DataError } from '../src/domain/types';
 import type { Company, Quote, Result, Series, WindowId } from '../src/domain/types';
 import type { MarketDataService } from '../src/services/MarketDataService';
 import { TtlCache } from './cache';
 import { QUOTE_TTL_MS, WINDOW_QUERY } from './windowQuery';
 import type { YahooClient } from './yahooClient';
-
-const SYMBOL_PATTERN = /^[A-Z0-9][A-Z0-9.-]{0,11}$/;
 
 export interface YahooMarketDataOptions {
   client: YahooClient;
@@ -18,6 +17,13 @@ export interface YahooMarketDataOptions {
    * Keeping an allow-list stops the proxy being used as an open Yahoo relay.
    */
   companies?: readonly Company[];
+  /**
+   * Serve any well-formed ticker, not just `companies`. Only for the separate user-lookup
+   * service; pair it with `maxCacheEntries` so user input cannot grow the caches without bound.
+   */
+  allowUnlisted?: boolean;
+  /** Per-cache entry limit (oldest evicted first). Unbounded by default. */
+  maxCacheEntries?: number;
   now?: () => number;
 }
 
@@ -38,19 +44,28 @@ export class YahooMarketDataService implements MarketDataService {
   private readonly quoteCache: TtlCache<Map<string, RawQuote>>;
   private readonly seriesCache: TtlCache<Series>;
 
-  constructor({ client, companies = COMPANIES, now = Date.now }: YahooMarketDataOptions) {
+  private readonly allowUnlisted: boolean;
+
+  constructor({
+    client,
+    companies = COMPANIES,
+    allowUnlisted = false,
+    maxCacheEntries,
+    now = Date.now,
+  }: YahooMarketDataOptions) {
     this.client = client;
     this.now = now;
+    this.allowUnlisted = allowUnlisted;
     this.names = new Map(companies.map((c) => [c.symbol, c.name]));
-    this.quoteCache = new TtlCache(now);
-    this.seriesCache = new TtlCache(now);
+    this.quoteCache = new TtlCache(now, maxCacheEntries);
+    this.seriesCache = new TtlCache(now, maxCacheEntries);
   }
 
   private checkSymbol(symbol: string): DataError | null {
-    if (!SYMBOL_PATTERN.test(symbol)) {
+    if (!isValidSymbol(symbol)) {
       return new DataError('INVALID', `Invalid symbol "${symbol}"`);
     }
-    if (!this.names.has(symbol)) {
+    if (!this.allowUnlisted && !this.names.has(symbol)) {
       return new DataError('NOT_FOUND', `Symbol ${symbol} is not tracked`);
     }
     return null;
@@ -77,7 +92,8 @@ export class YahooMarketDataService implements MarketDataService {
       const invalid = checks[i];
       if (invalid) return { ok: false, error: invalid };
       if (batchError) return { ok: false, error: batchError };
-      return normalizeQuote(symbol, raw.get(symbol), this.names.get(symbol) ?? symbol);
+      const row = raw.get(symbol);
+      return normalizeQuote(symbol, row, this.names.get(symbol) ?? row?.shortName ?? symbol);
     });
   }
 

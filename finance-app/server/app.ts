@@ -19,8 +19,32 @@ function isWindowId(value: unknown): value is WindowId {
   return WINDOWS.some((w) => w.id === value);
 }
 
-/** The service is injected so tests (and future providers) never touch the network. */
-export function createApp(service: MarketDataService): Express {
+function registerHistory(app: Express, path: string, service: MarketDataService): void {
+  app.get(path, async (req, res) => {
+    const symbol = typeof req.query.symbol === 'string' ? req.query.symbol.trim().toUpperCase() : '';
+    const window = req.query.window;
+
+    if (!symbol) return sendError(res, new DataError('INVALID', 'Missing symbol'));
+    if (!isWindowId(window)) {
+      return sendError(res, new DataError('INVALID', `window must be one of: ${WINDOWS.map((w) => w.id).join(', ')}`));
+    }
+
+    try {
+      const series = await service.getSeries(symbol, window);
+      const body: SeriesResponse = { series };
+      res.json(body);
+    } catch (err) {
+      sendError(res, mapYahooError(err, symbol));
+    }
+  });
+}
+
+/**
+ * The services are injected so tests (and future providers) never touch the network.
+ * `lookupService` answers user-chosen tickers at `/api/lookup/history`; it is separate so the
+ * tracked-company service can keep its allow-list.
+ */
+export function createApp(service: MarketDataService, lookupService?: MarketDataService): Express {
   const app = express();
 
   app.get('/api/health', (_req, res) => {
@@ -47,23 +71,8 @@ export function createApp(service: MarketDataService): Express {
     }
   });
 
-  app.get('/api/history', async (req, res) => {
-    const symbol = typeof req.query.symbol === 'string' ? req.query.symbol.trim().toUpperCase() : '';
-    const window = req.query.window;
-
-    if (!symbol) return sendError(res, new DataError('INVALID', 'Missing symbol'));
-    if (!isWindowId(window)) {
-      return sendError(res, new DataError('INVALID', `window must be one of: ${WINDOWS.map((w) => w.id).join(', ')}`));
-    }
-
-    try {
-      const series = await service.getSeries(symbol, window);
-      const body: SeriesResponse = { series };
-      res.json(body);
-    } catch (err) {
-      sendError(res, mapYahooError(err, symbol));
-    }
-  });
+  registerHistory(app, '/api/history', service);
+  if (lookupService) registerHistory(app, '/api/lookup/history', lookupService);
 
   return app;
 }
